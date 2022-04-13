@@ -20,13 +20,21 @@ function SetJDK {
     }
 
     # Replace PATH with Regex & JAVA_HOME.
-    $NewPATH = $env:PATH -replace [Regex]::Escape($JDKs[$CurrentJDK]),$JDKs[$WantedJDK]
+    $NewJDKPath = $JDKs[$WantedJDK]
+    $NewPATH = $env:PATH -replace [Regex]::Escape($JDKs[$CurrentJDK]),$NewJDKPath
 
-    Write-Host "Changing JAVA_HOME and PATH environmental variables to point to JDK $WantedJDK..."
+    $env:JAVA_HOME = $NewJDKPath
+    $env:PATH = $NewPATH
 
+    Write-Host "Changed current session's JAVA_HOME and PATH environmental variables."
+
+    Write-Host "Changing current user's JAVA_HOME and PATH environmental variables to point to JDK $WantedJDK (persistent)... This may take a bit..."
+
+    # Why it can take a while for the env vars to change:
+    # https://superuser.com/questions/565771/setting-user-environment-variables-is-very-slow
     Try {
         [System.Environment]::SetEnvironmentVariable("PATH", $NewPATH, 'User')
-        [System.Environment]::SetEnvironmentVariable("JAVA_HOME", $JDKs[$WantedJDK], 'User')
+        [System.Environment]::SetEnvironmentVariable("JAVA_HOME", $NewJDKPath, 'User')
     }
     Catch {
         Write-Error "Failed to change environmental variables!"
